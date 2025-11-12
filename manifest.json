@@ -1,0 +1,36 @@
+{
+    "manifest_version": 3,
+    "name": "Daily CF",
+    "version": "1.0",
+    "description": "Get daily Codeforces problem suggestions.",
+    "permissions": ["storage", "activeTab", "scripting"],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icons/16.png",
+            "48": "icons/48.png",
+            "128": "icons/128.png"
+        }
+    },
+    "icons": {
+        "16": "icons/16.png",
+        "48": "icons/48.png",
+        "128": "icons/128.png"
+    },
+    "content_scripts": [
+        {
+            "matches": ["https://codeforces.com/*"],
+            "js": ["content.js"],
+            "run_at": "document_idle"
+        },
+        {
+            "matches": [
+                "https://codeforces.com/submissions/*",
+                "https://codeforces.com/problemset/status?my=on"
+            ],
+            "js": ["watcher.js"],
+            "run_at": "document_idle"
+        }
+    ],
+    "host_permissions": ["https://codeforces.com/*"]
+}

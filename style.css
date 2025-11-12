@@ -1,0 +1,145 @@
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial;
+    background-color: #ffffff;
+    color: #111827;
+    transition: background-color 0.35s ease, color 0.35s ease;
+}
+body.dark-mode {
+    background-color: #212121;
+    color: #e0e0e0;
+}
+
+h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.form-control {
+    height: 32px;
+    transition: all 0.35s ease;
+}
+body.dark-mode .form-control {
+    background-color: #2a2b32;
+    color: #e0e0e0;
+    border: 1px solid #3f3f46;
+}
+body.dark-mode .form-control::placeholder {
+    color: #9aa0a6;
+}
+
+/* ---------- Status message ---------- */
+#status {
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+#status.show {
+    opacity: 1;
+}
+
+.card {
+    transition: all 0.35s ease;
+    border-radius: 6px;
+    color: #111827;
+}
+body.dark-mode .card {
+    background-color: #2a2b32;
+    color: #e0e0e0;
+    border: 1px solid #3f3f46;
+}
+
+.profile-animate {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.profile-animate.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.list-group-item {
+    background-color: transparent;
+    border: none;
+    padding: 6px 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.35s ease, border-left 0.35s ease;
+}
+.list-group-item:hover {
+    background-color: rgba(16, 163, 127, 0.08); /* Hover highlight */
+    border-left: 3px solid #10a37f;
+}
+body.dark-mode .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.list-group-item a {
+    flex-grow: 1;
+    text-decoration: none;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: inherit;
+}
+body.dark-mode .list-group-item a {
+    color: #d0d0d0;
+}
+body.dark-mode .list-group-item a:hover {
+    color: #fff;
+}
+
+.list-group-item span {
+    color: #6b7280;
+}
+body.dark-mode .list-group-item span {
+    color: #e0e0e0;
+}
+
+#clearBtn {
+    display: none;
+    transition: opacity 0.3s ease;
+    margin-top: 10px;
+}
+
+.theme-icon {
+    position: relative;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+body.dark-mode .theme-icon {
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+.theme-icon i {
+    position: absolute;
+    font-size: 1rem;
+    transition: opacity 1.5s ease;
+}
+i.sun {
+    opacity: 0;
+}
+i.moon {
+    opacity: 1;
+}
+body.dark-mode i.moon {
+    opacity: 0;
+}
+body.dark-mode i.sun {
+    opacity: 1;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.25em 0.5em;
+    margin-left: 4px;
+}
