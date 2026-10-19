@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
     "name": "Daily CF",
-    "version": "1.0",
-    "description": "Get daily Codeforces problem suggestions.",
+    "version": "1.1",
+    "description": "Get tailored daily Codeforces problem suggestions, contest calendars, and practice stats.",
     "permissions": ["storage", "activeTab", "scripting"],
     "action": {
         "default_popup": "popup.html",
@@ -32,5 +32,13 @@
             "run_at": "document_idle"
         }
     ],
-    "host_permissions": ["https://codeforces.com/*"]
+    "host_permissions": [
+        "https://codeforces.com/*",
+        "https://*.codeforces.com/*",
+        "https://codeforces.org/*",
+        "https://*.codeforces.org/*",
+        "https://codeforces.net/*",
+        "https://*.codeforces.net/*",
+        "https://userpic.codeforces.org/*"
+    ]
 }
