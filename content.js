@@ -666,6 +666,31 @@
             }
         }
 
+        // Determine year range filter from settings
+        function getYearBounds(currentYear) {
+            let filterMinYear = 2010;
+            let filterMaxYear = currentYear;
+
+            if (settings.yearPreset === "last3") {
+                filterMinYear = currentYear - 3;
+                filterMaxYear = currentYear;
+            } else if (settings.yearPreset === "last5") {
+                filterMinYear = currentYear - 5;
+                filterMaxYear = currentYear;
+            } else if (settings.yearPreset === "custom") {
+                const rawMin = parseInt(settings.customMinYear, 10);
+                const rawMax = parseInt(settings.customMaxYear, 10);
+                filterMinYear = isNaN(rawMin) ? 2010 : Math.max(2010, rawMin);
+                filterMaxYear = isNaN(rawMax) ? currentYear : Math.min(2035, rawMax);
+                if (filterMinYear > filterMaxYear) {
+                    const tmp = filterMinYear;
+                    filterMinYear = filterMaxYear;
+                    filterMaxYear = tmp;
+                }
+            }
+            return { filterMinYear, filterMaxYear };
+        }
+
         // --- Problem Candidates & Filter Pipeline ---
         async function fetchProblems(force = false) {
             try {
@@ -738,13 +763,27 @@
                     }
                 });
 
-                // Filter fresh problems within last 3 years
-                const threeYearsAgo = new Date(now.getTime() - 3 * 365 * 24 * 60 * 60 * 1000);
-                const unattempted = cfProblemset.filter((p) => {
+                // Filter problems matching the configured year range
+                const currentYear = now.getFullYear();
+                const { filterMinYear, filterMaxYear } = getYearBounds(currentYear);
+
+                let unattempted = cfProblemset.filter((p) => {
                     const key = `${p.contestId}-${p.index}`;
+                    if (attempted.has(key)) return false;
                     const contestDate = contestDateMap.get(p.contestId);
-                    return !attempted.has(key) && contestDate && contestDate >= threeYearsAgo;
+                    if (!contestDate) return false;
+                    const pYear = contestDate.getFullYear();
+                    return pYear >= filterMinYear && pYear <= filterMaxYear;
                 });
+
+                // If strict year range yields 0 problems, fallback gracefully to all unattempted
+                if (unattempted.length === 0) {
+                    window.alert(`[Daily CF] No unattempted problems found in year range ${filterMinYear}-${filterMaxYear}. Falling back to all unattempted.`);
+                    unattempted = cfProblemset.filter((p) => {
+                        const key = `${p.contestId}-${p.index}`;
+                        return !attempted.has(key);
+                    });
+                }
 
                 // Apply topic / tag filter (strictly preserving tag)
                 let tagFiltered = unattempted;
@@ -833,25 +872,51 @@
             }
         }
 
-        // --- Reroll a Single Problem (Preserving Tag) ---
+        // --- Reroll a Single Problem (Preserving Tag & Year Range) ---
         async function rerollSingleProblem(targetIndex) {
             try {
-                const { cfProblemset, cfProblems } = await chrome.storage.local.get(["cfProblemset", "cfProblems"]);
+                const { cfProblemset, cfProblems, cfContests } = await chrome.storage.local.get([
+                    "cfProblemset",
+                    "cfProblems",
+                    "cfContests",
+                ]);
                 if (!cfProblemset || !cfProblems || !cfProblems[targetIndex]) return;
+
+                const contestDateMap = new Map();
+                if (cfContests) {
+                    cfContests.forEach((c) => contestDateMap.set(c.id, new Date(c.startTimeSeconds * 1000)));
+                }
+
+                const currentYear = new Date().getFullYear();
+                const { filterMinYear, filterMaxYear } = getYearBounds(currentYear);
 
                 const currentKeys = new Set(cfProblems.map((p) => `${p.contestId}-${p.index}`));
                 const oldProb = cfProblems[targetIndex];
                 const targetRating = oldProb.rating || 1200;
                 const activeTag = (settings.selectedTag || "all").toLowerCase().trim();
 
-                // Find candidate matching similar rating bounds and active tag
-                const pool = cfProblemset.filter((p) => {
+                // Find candidate matching similar rating bounds, active tag, and year range
+                let pool = cfProblemset.filter((p) => {
                     const key = `${p.contestId}-${p.index}`;
                     if (currentKeys.has(key)) return false;
                     const matchesTag = activeTag === "all" || (p.tags && p.tags.some((t) => t.toLowerCase() === activeTag));
                     const matchesRating = p.rating && Math.abs(p.rating - targetRating) <= 150;
-                    return matchesTag && matchesRating;
+                    const contestDate = contestDateMap.get(p.contestId);
+                    const pYear = contestDate ? contestDate.getFullYear() : currentYear;
+                    const matchesYear = pYear >= filterMinYear && pYear <= filterMaxYear;
+                    return matchesTag && matchesRating && matchesYear;
                 });
+
+                // If pool is empty, relax year constraint while strictly preserving tag
+                if (pool.length === 0) {
+                    pool = cfProblemset.filter((p) => {
+                        const key = `${p.contestId}-${p.index}`;
+                        if (currentKeys.has(key)) return false;
+                        const matchesTag = activeTag === "all" || (p.tags && p.tags.some((t) => t.toLowerCase() === activeTag));
+                        const matchesRating = p.rating && Math.abs(p.rating - targetRating) <= 200;
+                        return matchesTag && matchesRating;
+                    });
+                }
 
                 if (pool.length > 0) {
                     const replacement = pool[Math.floor(Math.random() * pool.length)];

@@ -214,6 +214,29 @@
                 </select>
             </div>
 
+            <!-- Contest Year Range Filter -->
+            <div class="settings-group">
+                <div class="settings-label">
+                    <span>Contest Year Range</span>
+                </div>
+                <select id="yearPresetSelect" class="form-select">
+                    <option value="all">All Contests (2010 – Present)</option>
+                    <option value="last3">Past 3 Years</option>
+                    <option value="last5">Past 5 Years</option>
+                    <option value="custom">Custom Year Range</option>
+                </select>
+
+                <!-- Custom Year Range Inputs (From Year / To Year) -->
+                <div id="customYearRow" class="custom-range-grid" style="display: none; margin-top: 6px;">
+                    <div>
+                        <input type="number" id="customMinYear" class="form-control" placeholder="From Year (e.g. 2018)" min="2010" max="2035" />
+                    </div>
+                    <div>
+                        <input type="number" id="customMaxYear" class="form-control" placeholder="To Year (e.g. 2026)" min="2010" max="2035" />
+                    </div>
+                </div>
+            </div>
+
             <!-- Blind Mode Toggle -->
             <div class="settings-group">
                 <div class="toggle-row">

@@ -25,6 +25,7 @@
   - **Challenge**: Stretch problems to level up ($+100$..$+300$).
   - **Custom Bounds**: Set explicit minimum and maximum rating limits (e.g. 1400–1800).
 - **Topic & Tag Selection**: Filter specifically for Dynamic Programming, Graphs, Math, Greedy, Trees, Data Structures, Binary Search, Geometry, and more.
+- **Contest Year Range Filter**: Choose from "All Contests (2010–Present)", "Past 3 Years", "Past 5 Years", or set an explicit custom start and end year (e.g. 2018–2024).
 - **Problem Set Sizes**: Generate sets of 1, 3, 5, 8, or 10 problems per day.
 
 ### 2. In-Page Codeforces Integration
@@ -115,6 +116,7 @@ For a visual walkthrough of the manual installation process:
 2. **Configure Your Practice (Settings Tab)**:
    - Choose your preferred difficulty mode (Warm-up, Standard, Challenge, or Custom Rating Range).
    - Select targeted tags (e.g., Dynamic Programming, Graphs) or keep "All Topics".
+   - Set your preferred **Contest Year Range** (e.g. Past 3 Years, Past 5 Years, or Custom Range).
    - Toggle **Blind Practice Mode** if you wish to hide rating badges while solving.
    - Click **Save Practice Settings**.
 3. **Solve on Codeforces**:

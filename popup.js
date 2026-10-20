@@ -34,6 +34,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const customMaxRating = document.getElementById("customMaxRating");
     const selectedTagSelect = document.getElementById("selectedTagSelect");
     const problemCountSelect = document.getElementById("problemCountSelect");
+    const yearPresetSelect = document.getElementById("yearPresetSelect");
+    const customYearRow = document.getElementById("customYearRow");
+    const customMinYear = document.getElementById("customMinYear");
+    const customMaxYear = document.getElementById("customMaxYear");
     const blindModeToggle = document.getElementById("blindModeToggle");
     const saveSettingsBtn = document.getElementById("saveSettingsBtn");
 
@@ -553,7 +557,13 @@ document.addEventListener("DOMContentLoaded", () => {
         customRangeRow.style.display = selected === "custom" ? "grid" : "none";
     }
 
+    function updateCustomYearVisibility() {
+        const selected = yearPresetSelect.value;
+        customYearRow.style.display = selected === "custom" ? "grid" : "none";
+    }
+
     difficultyRadios.forEach((r) => r.addEventListener("change", updateCustomRangeVisibility));
+    yearPresetSelect.addEventListener("change", updateCustomYearVisibility);
 
     // Auto-save blind mode toggle immediately on flip
     blindModeToggle.addEventListener("change", async () => {
@@ -579,7 +589,13 @@ document.addEventListener("DOMContentLoaded", () => {
         problemCountSelect.value = s.problemCount || "5";
         blindModeToggle.checked = Boolean(s.blindMode);
 
+        const currentYear = new Date().getFullYear();
+        yearPresetSelect.value = s.yearPreset || "all";
+        customMinYear.value = s.customMinYear || (currentYear - 5);
+        customMaxYear.value = s.customMaxYear || currentYear;
+
         updateCustomRangeVisibility();
+        updateCustomYearVisibility();
     }
 
     saveSettingsBtn.addEventListener("click", async () => {
@@ -590,6 +606,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const problemCount = parseInt(problemCountSelect.value, 10) || 5;
         const blindMode = blindModeToggle.checked;
 
+        const currentYear = new Date().getFullYear();
+        const yearPreset = yearPresetSelect.value || "all";
+        const rawMinY = parseInt(customMinYear.value, 10);
+        const rawMaxY = parseInt(customMaxYear.value, 10);
+        const minY = isNaN(rawMinY) ? (currentYear - 5) : Math.max(2010, rawMinY);
+        const maxY = isNaN(rawMaxY) ? currentYear : Math.min(2035, rawMaxY);
+
         const cfSettings = {
             difficultyMode,
             customMinRating: Math.min(minR, maxR),
@@ -597,6 +620,9 @@ document.addEventListener("DOMContentLoaded", () => {
             selectedTag,
             problemCount,
             blindMode,
+            yearPreset,
+            customMinYear: Math.min(minY, maxY),
+            customMaxYear: Math.max(minY, maxY),
         };
 
         await chrome.storage.sync.set({ cfSettings });
