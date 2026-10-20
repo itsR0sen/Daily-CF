@@ -315,6 +315,8 @@
             customMinRating: 800,
             customMaxRating: 2000,
             selectedTag: "all",
+            selectedTags: [],
+            tagMatchMode: "any",
             problemCount: 5,
             blindMode: false,
         };
@@ -704,6 +706,30 @@
             return { filterMinYear, filterMaxYear };
         }
 
+        // Retrieve active tags array (multi-tag support with backward compatibility)
+        function getActiveTags() {
+            if (Array.isArray(settings.selectedTags) && settings.selectedTags.length > 0) {
+                return settings.selectedTags
+                    .map((t) => (t || "").toLowerCase().trim())
+                    .filter((t) => t && t !== "all");
+            }
+            if (settings.selectedTag && settings.selectedTag !== "all") {
+                return [settings.selectedTag.toLowerCase().trim()];
+            }
+            return [];
+        }
+
+        // Check if problem matches active tags according to match mode ("any" or "all")
+        function problemMatchesTags(p, activeTags, mode) {
+            if (!activeTags || activeTags.length === 0) return true;
+            if (!p.tags || p.tags.length === 0) return false;
+            const pTags = p.tags.map((t) => (t || "").toLowerCase());
+            if (mode === "all") {
+                return activeTags.every((t) => pTags.includes(t));
+            }
+            return activeTags.some((t) => pTags.includes(t));
+        }
+
         // --- Problem Candidates & Filter Pipeline ---
         async function fetchProblems(force = false) {
             try {
@@ -791,22 +817,31 @@
 
                 // If strict year range yields 0 problems, fallback gracefully to all unattempted
                 if (unattempted.length === 0) {
-                    window.alert(`[Daily CF] No unattempted problems found in year range ${filterMinYear}-${filterMaxYear}. Falling back to all unattempted.`);
+                    console.warn(`[Daily CF] No unattempted problems found in year range ${filterMinYear}-${filterMaxYear}. Falling back to all unattempted.`);
                     unattempted = cfProblemset.filter((p) => {
                         const key = `${p.contestId}-${p.index}`;
                         return !attempted.has(key);
                     });
                 }
 
-                // Apply topic / tag filter (strictly preserving tag)
+                // Apply topic / tag filter (strictly preserving tags)
                 let tagFiltered = unattempted;
-                const activeTag = (settings.selectedTag || "all").toLowerCase().trim();
-                if (activeTag && activeTag !== "all") {
-                    const matched = unattempted.filter((p) => p.tags && p.tags.some((t) => t.toLowerCase() === activeTag));
+                const activeTags = getActiveTags();
+                const tagMatchMode = settings.tagMatchMode || "any";
+
+                if (activeTags.length > 0) {
+                    let matched = unattempted.filter((p) => problemMatchesTags(p, activeTags, tagMatchMode));
+
+                    // If "all" mode yielded 0 problems, fallback gracefully to "any" mode
+                    if (matched.length === 0 && tagMatchMode === "all") {
+                        console.warn(`[Daily CF] No unattempted problems match ALL tags [${activeTags.join(", ")}]. Falling back to ANY.`);
+                        matched = unattempted.filter((p) => problemMatchesTags(p, activeTags, "any"));
+                    }
+
                     if (matched.length > 0) {
                         tagFiltered = matched;
                     } else {
-                        console.warn(`[Daily CF] No unattempted problems found with tag "${activeTag}". Falling back to all topics.`);
+                        console.warn(`[Daily CF] No unattempted problems found with tags [${activeTags.join(", ")}]. Falling back to all topics.`);
                     }
                 }
 
@@ -852,6 +887,30 @@
                 const count = Math.min(settings.problemCount || 5, candidates.length);
                 const picked = [];
                 const usedKeys = new Set();
+
+                // If multiple tags are selected, ensure each tag is represented across the picked set if possible
+                if (activeTags.length > 1 && tagFiltered !== unattempted) {
+                    for (const tag of activeTags) {
+                        if (picked.length >= count) break;
+                        const matchingTag = candidates.filter((p) => {
+                            const key = `${p.contestId}-${p.index}`;
+                            return !usedKeys.has(key) && p.tags && p.tags.some((t) => (t || "").toLowerCase() === tag);
+                        });
+                        if (matchingTag.length > 0) {
+                            const chosen = matchingTag[Math.floor(Math.random() * matchingTag.length)];
+                            const key = `${chosen.contestId}-${chosen.index}`;
+                            picked.push({
+                                contestId: chosen.contestId,
+                                index: chosen.index,
+                                name: chosen.name,
+                                rating: chosen.rating,
+                                tags: chosen.tags,
+                                isSolved: false,
+                            });
+                            usedKeys.add(key);
+                        }
+                    }
+                }
 
                 while (picked.length < count && usedKeys.size < candidates.length) {
                     const prob = candidates[Math.floor(Math.random() * candidates.length)];
@@ -906,13 +965,14 @@
                 const currentKeys = new Set(cfProblems.map((p) => `${p.contestId}-${p.index}`));
                 const oldProb = cfProblems[targetIndex];
                 const targetRating = oldProb.rating || 1200;
-                const activeTag = (settings.selectedTag || "all").toLowerCase().trim();
+                const activeTags = getActiveTags();
+                const tagMatchMode = settings.tagMatchMode || "any";
 
-                // Find candidate matching similar rating bounds, active tag, and year range
+                // Find candidate matching similar rating bounds, active tags, and year range
                 let pool = cfProblemset.filter((p) => {
                     const key = `${p.contestId}-${p.index}`;
                     if (currentKeys.has(key)) return false;
-                    const matchesTag = activeTag === "all" || (p.tags && p.tags.some((t) => t.toLowerCase() === activeTag));
+                    const matchesTag = problemMatchesTags(p, activeTags, tagMatchMode);
                     const matchesRating = p.rating && Math.abs(p.rating - targetRating) <= 150;
                     const contestDate = contestDateMap.get(p.contestId);
                     const pYear = contestDate ? contestDate.getFullYear() : currentYear;
@@ -920,12 +980,26 @@
                     return matchesTag && matchesRating && matchesYear;
                 });
 
-                // If pool is empty, relax year constraint while strictly preserving tag
+                // If pool is empty and tagMatchMode was "all", fallback to "any"
+                if (pool.length === 0 && tagMatchMode === "all") {
+                    pool = cfProblemset.filter((p) => {
+                        const key = `${p.contestId}-${p.index}`;
+                        if (currentKeys.has(key)) return false;
+                        const matchesTag = problemMatchesTags(p, activeTags, "any");
+                        const matchesRating = p.rating && Math.abs(p.rating - targetRating) <= 150;
+                        const contestDate = contestDateMap.get(p.contestId);
+                        const pYear = contestDate ? contestDate.getFullYear() : currentYear;
+                        const matchesYear = pYear >= filterMinYear && pYear <= filterMaxYear;
+                        return matchesTag && matchesRating && matchesYear;
+                    });
+                }
+
+                // If pool is still empty, relax year constraint while preserving tags
                 if (pool.length === 0) {
                     pool = cfProblemset.filter((p) => {
                         const key = `${p.contestId}-${p.index}`;
                         if (currentKeys.has(key)) return false;
-                        const matchesTag = activeTag === "all" || (p.tags && p.tags.some((t) => t.toLowerCase() === activeTag));
+                        const matchesTag = problemMatchesTags(p, activeTags, "any");
                         const matchesRating = p.rating && Math.abs(p.rating - targetRating) <= 200;
                         return matchesTag && matchesRating;
                     });

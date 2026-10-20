@@ -175,29 +175,53 @@
                 </div>
             </div>
 
-            <!-- Topic / Tag Filter -->
+            <!-- Topic / Tag Filter (Multi-Select) -->
             <div class="settings-group">
-                <div class="settings-label">
-                    <span>Target Topic / Tag</span>
+                <div class="tags-header-row">
+                    <span class="settings-label-title">Target Topics / Tags</span>
+                    <span id="selectedTagsCount" class="tags-count-badge">All Topics</span>
                 </div>
-                <select id="selectedTagSelect" class="form-select">
-                    <option value="all">All Topics (Any)</option>
-                    <option value="dp">Dynamic Programming</option>
-                    <option value="math">Mathematics</option>
-                    <option value="greedy">Greedy</option>
-                    <option value="data structures">Data Structures</option>
-                    <option value="graphs">Graphs</option>
-                    <option value="trees">Trees</option>
-                    <option value="strings">Strings</option>
-                    <option value="binary search">Binary Search</option>
-                    <option value="number theory">Number Theory</option>
-                    <option value="constructive algorithms">Constructive Algorithms</option>
-                    <option value="two pointers">Two Pointers</option>
-                    <option value="combinatorics">Combinatorics</option>
-                    <option value="geometry">Geometry</option>
-                    <option value="bitmasks">Bitmasks</option>
-                    <option value="sortings">Sortings</option>
-                </select>
+                <div class="tag-actions-row">
+                    <input type="text" id="tagSearchInput" class="form-control tag-search-input" placeholder="Search tags (e.g. dp, graph)..." />
+                    <button type="button" id="clearTagsBtn" class="tag-action-btn">Clear</button>
+                    <button type="button" id="selectAllTagsBtn" class="tag-action-btn">All</button>
+                </div>
+                <div id="tagsContainer" class="tags-chip-container">
+                    <button type="button" class="tag-chip" data-tag="dp">Dynamic Programming</button>
+                    <button type="button" class="tag-chip" data-tag="math">Mathematics</button>
+                    <button type="button" class="tag-chip" data-tag="greedy">Greedy</button>
+                    <button type="button" class="tag-chip" data-tag="data structures">Data Structures</button>
+                    <button type="button" class="tag-chip" data-tag="graphs">Graphs</button>
+                    <button type="button" class="tag-chip" data-tag="trees">Trees</button>
+                    <button type="button" class="tag-chip" data-tag="strings">Strings</button>
+                    <button type="button" class="tag-chip" data-tag="binary search">Binary Search</button>
+                    <button type="button" class="tag-chip" data-tag="number theory">Number Theory</button>
+                    <button type="button" class="tag-chip" data-tag="constructive algorithms">Constructive Algorithms</button>
+                    <button type="button" class="tag-chip" data-tag="two pointers">Two Pointers</button>
+                    <button type="button" class="tag-chip" data-tag="combinatorics">Combinatorics</button>
+                    <button type="button" class="tag-chip" data-tag="geometry">Geometry</button>
+                    <button type="button" class="tag-chip" data-tag="bitmasks">Bitmasks</button>
+                    <button type="button" class="tag-chip" data-tag="sortings">Sortings</button>
+                    <button type="button" class="tag-chip" data-tag="dfs and similar">DFS and Similar</button>
+                    <button type="button" class="tag-chip" data-tag="brute force">Brute Force</button>
+                    <button type="button" class="tag-chip" data-tag="implementation">Implementation</button>
+                    <button type="button" class="tag-chip" data-tag="shortest paths">Shortest Paths</button>
+                    <button type="button" class="tag-chip" data-tag="dsu">DSU</button>
+                    <button type="button" class="tag-chip" data-tag="divide and conquer">Divide and Conquer</button>
+                    <button type="button" class="tag-chip" data-tag="probabilities">Probabilities</button>
+                    <button type="button" class="tag-chip" data-tag="games">Games</button>
+                </div>
+                <div class="tag-match-mode-row">
+                    <span class="match-mode-label">Match:</span>
+                    <label class="match-mode-option">
+                        <input type="radio" name="tagMatchMode" value="any" checked />
+                        <span>Any Tag (OR)</span>
+                    </label>
+                    <label class="match-mode-option">
+                        <input type="radio" name="tagMatchMode" value="all" />
+                        <span>All Tags (AND)</span>
+                    </label>
+                </div>
             </div>
 
             <!-- Problem Count -->

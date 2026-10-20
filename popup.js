@@ -32,7 +32,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const customRangeRow = document.getElementById("customRangeRow");
     const customMinRating = document.getElementById("customMinRating");
     const customMaxRating = document.getElementById("customMaxRating");
-    const selectedTagSelect = document.getElementById("selectedTagSelect");
+    const selectedTagsCount = document.getElementById("selectedTagsCount");
+    const tagSearchInput = document.getElementById("tagSearchInput");
+    const clearTagsBtn = document.getElementById("clearTagsBtn");
+    const selectAllTagsBtn = document.getElementById("selectAllTagsBtn");
+    const tagsContainer = document.getElementById("tagsContainer");
+    const tagChips = document.querySelectorAll(".tag-chip");
+    const tagMatchModeRadios = document.querySelectorAll('input[name="tagMatchMode"]');
     const problemCountSelect = document.getElementById("problemCountSelect");
     const yearPresetSelect = document.getElementById("yearPresetSelect");
     const customYearRow = document.getElementById("customYearRow");
@@ -575,6 +581,72 @@ document.addEventListener("DOMContentLoaded", () => {
         loadDailyProblemsInPopup();
     });
 
+    // --- Multi-Tag Selection Logic ---
+    function getSelectedTags() {
+        return Array.from(document.querySelectorAll(".tag-chip.selected")).map((chip) => chip.dataset.tag);
+    }
+
+    function updateTagsCountLabel() {
+        if (!selectedTagsCount) return;
+        const selected = getSelectedTags();
+        if (selected.length === 0) {
+            selectedTagsCount.textContent = "All Topics (Any)";
+        } else if (selected.length === 1) {
+            const chip = document.querySelector(`.tag-chip[data-tag="${selected[0]}"]`);
+            selectedTagsCount.textContent = chip ? chip.textContent.trim() : selected[0];
+        } else {
+            selectedTagsCount.textContent = `${selected.length} tags selected`;
+        }
+    }
+
+    function setSelectedTags(tagsArray) {
+        const targetSet = new Set((tagsArray || []).map((t) => t.toLowerCase().trim()));
+        tagChips.forEach((chip) => {
+            if (targetSet.has(chip.dataset.tag.toLowerCase())) {
+                chip.classList.add("selected");
+            } else {
+                chip.classList.remove("selected");
+            }
+        });
+        updateTagsCountLabel();
+    }
+
+    tagChips.forEach((chip) => {
+        chip.addEventListener("click", () => {
+            chip.classList.toggle("selected");
+            updateTagsCountLabel();
+        });
+    });
+
+    if (tagSearchInput) {
+        tagSearchInput.addEventListener("input", () => {
+            const q = tagSearchInput.value.toLowerCase().trim();
+            tagChips.forEach((chip) => {
+                const tag = chip.dataset.tag.toLowerCase();
+                const text = chip.textContent.toLowerCase();
+                if (!q || tag.includes(q) || text.includes(q)) {
+                    chip.style.display = "";
+                } else {
+                    chip.style.display = "none";
+                }
+            });
+        });
+    }
+
+    if (clearTagsBtn) {
+        clearTagsBtn.addEventListener("click", () => {
+            tagChips.forEach((c) => c.classList.remove("selected"));
+            updateTagsCountLabel();
+        });
+    }
+
+    if (selectAllTagsBtn) {
+        selectAllTagsBtn.addEventListener("click", () => {
+            tagChips.forEach((c) => c.classList.remove("selected"));
+            updateTagsCountLabel();
+        });
+    }
+
     async function loadSettings() {
         const data = await chrome.storage.sync.get(["cfSettings"]);
         const s = data.cfSettings || {};
@@ -585,7 +657,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         customMinRating.value = s.customMinRating || 1200;
         customMaxRating.value = s.customMaxRating || 1600;
-        selectedTagSelect.value = s.selectedTag || "all";
+
+        let tagsToSet = [];
+        if (Array.isArray(s.selectedTags)) {
+            tagsToSet = s.selectedTags;
+        } else if (s.selectedTag && s.selectedTag !== "all") {
+            tagsToSet = [s.selectedTag];
+        }
+        setSelectedTags(tagsToSet);
+
+        const matchMode = s.tagMatchMode || "any";
+        const matchRadio = document.querySelector(`input[name="tagMatchMode"][value="${matchMode}"]`);
+        if (matchRadio) matchRadio.checked = true;
+
         problemCountSelect.value = s.problemCount || "5";
         blindModeToggle.checked = Boolean(s.blindMode);
 
@@ -602,7 +686,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const difficultyMode = document.querySelector('input[name="difficultyMode"]:checked')?.value || "standard";
         const minR = parseInt(customMinRating.value, 10) || 800;
         const maxR = parseInt(customMaxRating.value, 10) || 2000;
-        const selectedTag = selectedTagSelect.value || "all";
+        const selectedTags = getSelectedTags();
+        const tagMatchMode = document.querySelector('input[name="tagMatchMode"]:checked')?.value || "any";
+        const selectedTag = selectedTags.length === 1 ? selectedTags[0] : (selectedTags.length > 0 ? selectedTags[0] : "all");
         const problemCount = parseInt(problemCountSelect.value, 10) || 5;
         const blindMode = blindModeToggle.checked;
 
@@ -618,6 +704,8 @@ document.addEventListener("DOMContentLoaded", () => {
             customMinRating: Math.min(minR, maxR),
             customMaxRating: Math.max(minR, maxR),
             selectedTag,
+            selectedTags,
+            tagMatchMode,
             problemCount,
             blindMode,
             yearPreset,
