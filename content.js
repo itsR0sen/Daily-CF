@@ -300,6 +300,8 @@
         return `${minutes}m`;
     }
 
+    const SESSION_PROMPT_KEY = "daily_cf_prompted_session";
+
     // --- Main Daily CF Injected Widget ---
     async function initDailyCF() {
         injectWidgetStyles();
@@ -323,29 +325,40 @@
             return;
         }
 
-        // --- Handle Detection with User Confirmation (No silent auto-sync) ---
+        // --- Handle Detection with User Confirmation (At most ONCE per tab session) ---
         if (!username) {
             const detectedHandle = document.querySelector("#header a[href^='/profile/']")?.textContent?.trim() || null;
             let approvedHandle = null;
 
-            if (detectedHandle) {
-                // Ask user confirmation before syncing handle
-                const confirmed = window.confirm(
-                    `Daily CF:\nFound logged-in Codeforces handle "${detectedHandle}".\n\nWould you like to use this handle for your daily practice suggestions?`
-                );
-                if (confirmed) {
-                    approvedHandle = detectedHandle;
-                }
+            let hasPromptedInSession = false;
+            try {
+                hasPromptedInSession = sessionStorage.getItem(SESSION_PROMPT_KEY) === "true";
+            } catch (e) {
+                hasPromptedInSession = false;
             }
 
-            if (!approvedHandle) {
-                // If user declined or was not logged in, ask via prompt
-                const prompted = window.prompt(
-                    "Daily CF: Please enter your Codeforces username to receive daily problem suggestions:",
-                    detectedHandle || ""
-                );
-                if (prompted && prompted.trim()) {
-                    approvedHandle = prompted.trim();
+            // Notify at most once per tab session to eliminate repetitive popup alerts
+            if (!hasPromptedInSession) {
+                try {
+                    sessionStorage.setItem(SESSION_PROMPT_KEY, "true");
+                } catch (e) {}
+
+                if (detectedHandle) {
+                    // Exactly ONE confirmation dialog for detected handle per tab session
+                    const confirmed = window.confirm(
+                        `Daily CF:\nFound logged-in Codeforces handle "${detectedHandle}".\n\nWould you like to use this handle for your daily practice suggestions?`
+                    );
+                    if (confirmed) {
+                        approvedHandle = detectedHandle;
+                    }
+                } else {
+                    // Exactly ONE prompt dialog if no handle is detected per tab session
+                    const prompted = window.prompt(
+                        "Daily CF: Please enter your Codeforces username to receive daily problem suggestions:"
+                    );
+                    if (prompted && prompted.trim()) {
+                        approvedHandle = prompted.trim();
+                    }
                 }
             }
 
