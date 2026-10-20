@@ -4,7 +4,7 @@
 
 # Daily CF — Chrome Extension
 
-**Repository:** [Daily CF on GitHub](https://github.com/itsR0sen/Extensions/tree/4931fe679f217e66cd7fe26cb5d8bba00f854cf0/Daily%20CF)  
+**Repository:** [Daily CF on GitHub](https://github.com/itsR0sen/Daily-CF)  
 **Author:** [itsR0sen](https://github.com/itsR0sen)  
 **Version:** 1.1 (Manifest V3)
 
@@ -81,8 +81,8 @@ Daily CF/
 ## Manual Installation Guide (Chrome)
 
 ### Step 1: Download the Extension Files
-1. Open the repository: [Daily CF on GitHub](https://github.com/itsR0sen/Extensions/tree/4931fe679f217e66cd7fe26cb5d8bba00f854cf0/Daily%20CF).
-2. Click **Code** → **Download ZIP**.
+1. Open the repository: [Daily CF on GitHub](https://github.com/itsR0sen/Daily-CF).
+2. Click **Code** → **Download ZIP** (or run `git clone https://github.com/itsR0sen/Daily-CF.git`).
 3. Extract the downloaded ZIP to a folder on your computer (e.g. `Documents/DailyCF`).
 4. Ensure `manifest.json` is located in the root of the extracted folder.
 
